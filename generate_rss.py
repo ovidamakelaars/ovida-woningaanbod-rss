@@ -5,6 +5,7 @@ from datetime import datetime
 from email.utils import format_datetime
 from pathlib import Path
 from xml.dom import minidom
+from html import escape
 
 SOURCE_URL = "https://ovida.com/api./properties/available.json"
 OUTPUT_FILE = "feed.xml"
@@ -25,7 +26,6 @@ ET.SubElement(channel, "title").text = "Ovida Woningaanbod"
 ET.SubElement(channel, "description").text = "Alle beschikbare woningen van Ovida"
 ET.SubElement(channel, "link").text = "https://ovida.com/wonen/aanbod"
 
-# De JSON bevat de woningen in 'objects'
 properties = data.get("objects", [])
 
 for property in properties:
@@ -61,23 +61,82 @@ for property in properties:
         except ValueError:
             pass
 
-    # Beschrijving
-    price = property.get("rent_price") or property.get("buy_price") or ""
-    rooms = property.get("amount_of_rooms") or ""
-    area = property.get("usable_area_living_function") or ""
+    # Prijs
+    price = property.get("rent_price") or property.get("buy_price")
 
-    description = (
-        f"Adres: {address}, {place}\n"
-        f"Prijs: {price}\n"
-        f"Kamers: {rooms}\n"
-        f"Oppervlakte: {area} m²\n"
-        f"Objectcode: {object_code}"
-    )
+    if price:
+        try:
+            price_text = f"€ {float(price):,.0f}".replace(",", ".")
+        except (ValueError, TypeError):
+            price_text = str(price)
+    else:
+        price_text = "Op aanvraag"
 
-    ET.SubElement(item, "description").text = description
+    # Oppervlakte
+    area = property.get("usable_area_living_function")
+
+    if area:
+        area_text = f"{area} m²"
+    else:
+        area_text = "Niet opgegeven"
+
+    # Hoofdfoto
+    main_images = property.get("realworks_main_images", [])
+    image_url = ""
+
+    if main_images:
+        try:
+            image_url = main_images[0]["sizes"][0]["imageUrl"]
+        except (KeyError, IndexError, TypeError):
+            image_url = ""
+
+    if image_url:
+        if image_url.startswith("/"):
+            image_url = "https://ovida.com" + image_url
+
+    # HTML-kaart voor de e-mail
+    html = f"""
+<table cellpadding="0" cellspacing="0" border="0"
+       style="width:100%; max-width:760px; font-family:Arial,Helvetica,sans-serif;
+              border:1px solid #dddddd; border-radius:8px; overflow:hidden;
+              margin:0 0 20px 0;">
+    <tr>
+        <td style="width:42%; vertical-align:top;">
+            <img src="{escape(image_url)}"
+                 alt="{escape(title)}"
+                 style="display:block; width:100%; height:190px; object-fit:cover;">
+        </td>
+
+        <td style="width:58%; vertical-align:top; padding:20px 22px;">
+            <div style="font-size:20px; line-height:1.3; font-weight:bold;
+                        color:#162340; margin-bottom:15px;">
+                {escape(title)}
+            </div>
+
+            <div style="font-size:15px; line-height:1.7; color:#333333;">
+                <strong>Prijs:</strong> {escape(price_text)}<br>
+                <strong>Oppervlakte:</strong> {escape(area_text)}
+            </div>
+
+            <div style="margin-top:18px;">
+                <a href="{escape(property_url)}"
+                   style="display:inline-block; background:#f18700;
+                          color:#ffffff; text-decoration:none;
+                          font-weight:bold; font-size:14px;
+                          padding:11px 18px; border-radius:5px;">
+                    Bekijk woning
+                </a>
+            </div>
+        </td>
+    </tr>
+</table>
+"""
+
+    ET.SubElement(item, "description").text = html
 
 # XML netjes formatteren
 xml_bytes = ET.tostring(rss, encoding="utf-8")
+
 pretty_xml = minidom.parseString(xml_bytes).toprettyxml(
     indent="  ",
     encoding="utf-8"
