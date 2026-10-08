@@ -33,7 +33,7 @@ for property in properties:
 
     street = property.get("street_name", "")
     house_number = property.get("house_number", "")
-    addition = property.get("house_number_addition", "")
+    addition = property.get("house_number_addition") or ""
     place = property.get("place", "")
     
     address = f"{street} {house_number}{addition}".strip()
