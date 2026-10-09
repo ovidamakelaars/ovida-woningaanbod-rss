@@ -99,7 +99,7 @@ for property in properties:
 <table cellpadding="0" cellspacing="0" border="0"
        style="width:100%; max-width:760px; font-family:Arial,Helvetica,sans-serif;
               border:3px solid #162340; border-radius:8px; overflow:hidden;
-              margin:0 0 20px 0;">
+              margin:0;">
     <tr>
         <td style="width:42%; vertical-align:top;">
             <img src="{escape(image_url)}"
