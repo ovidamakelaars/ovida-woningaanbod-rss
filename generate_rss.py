@@ -11,8 +11,38 @@ SOURCE_URL = "https://ovida.com/api./properties/available.json"
 OUTPUT_FILE = "feed.xml"
 
 # Ovida JSON ophalen
-with urllib.request.urlopen(SOURCE_URL, timeout=30) as response:
-    data = json.loads(response.read().decode("utf-8"))
+
+# Ovida JSON ophalen met maximaal 3 pogingen
+import time
+import socket
+import urllib.error
+
+data = None
+last_error = None
+
+for attempt in range(3):
+    try:
+        request = urllib.request.Request(
+            SOURCE_URL,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+
+        with urllib.request.urlopen(request, timeout=90) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        break
+
+    except (urllib.error.URLError, TimeoutError, socket.timeout) as error:
+        last_error = error
+        print(f"Ovida ophalen mislukt (poging {attempt + 1}/3): {error}")
+
+        if attempt < 2:
+            time.sleep(10)
+
+if data is None:
+    raise RuntimeError(
+        f"Ovida-API niet bereikbaar na 3 pogingen: {last_error}"
+    )
 
 # RSS opbouwen
 rss = ET.Element("rss", {
