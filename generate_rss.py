@@ -81,6 +81,18 @@ for property in properties:
         "isPermaLink": "false"
     }).text = object_code
 
+        # Vestiging uit de Ovida JSON
+    office = property.get("office") or {}
+
+    if isinstance(office, dict):
+        office_name = office.get("name") or ""
+    else:
+        office_name = ""
+
+    # Vestiging als standaard RSS-categorie toevoegen
+    if office_name:
+        ET.SubElement(item, "category").text = office_name
+
     # Publicatiedatum
     publish_date = property.get("publish_date") or property.get("created_at")
 
