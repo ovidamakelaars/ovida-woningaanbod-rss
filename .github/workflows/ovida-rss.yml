@@ -2,8 +2,8 @@ name: Ovida RSS feed
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 * * * *"
+schedule:
+  - cron: "*/10 * * * *" 
 
 permissions:
   contents: write
