@@ -81,13 +81,12 @@ for property in properties:
         "isPermaLink": "false"
     }).text = object_code
 
-        # Vestiging uit de Ovida JSON
+    # Vestiging uit de Ovida JSON halen
     office = property.get("office") or {}
-
     if isinstance(office, dict):
-        office_name = office.get("name") or ""
+        office_name = office.get("name") or "Onbekende vestiging"
     else:
-        office_name = ""
+        office_name = "Onbekende vestiging"
 
     # Vestiging als standaard RSS-categorie toevoegen
     if office_name:
@@ -155,10 +154,12 @@ for property in properties:
                 {escape(title)}
             </div>
 
-            <div style="font-size:15px; line-height:1.7; color:#333333;">
-                <strong>Prijs:</strong> {escape(price_text)}<br>
-                <strong>Oppervlakte:</strong> {escape(area_text)}
-            </div>
+         
+<div style="font-size:15px; line-height:1.7; color:#333333;">
+    <strong>Vestiging:</strong> {escape(office_name)}<br>
+    <strong>Prijs:</strong> {escape(price_text)}<br>
+    <strong>Oppervlakte:</strong> {escape(area_text)}
+</div>
 
             <div style="margin-top:18px;">
                 <a href="{escape(property_url)}"
